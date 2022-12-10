@@ -1,0 +1,180 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+import "mesos/mesos.proto";
+
+import "mesos/maintenance/maintenance.proto";
+
+import "mesos/quota/quota.proto";
+
+import "resource_provider/registry.proto";
+
+package mesos.internal;
+
+/**
+ * A top level object that is managed by the Registrar and persisted in a
+ * replicated log.  This object is recovered upon master startup and failover.
+ */
+message Registry {
+  // NOTE: This object defines wrappers around existing objects in case
+  // the Registry wishes to store more information about the wrapped objects
+  // in the future.
+
+  message Master {
+    required MasterInfo info = 1;
+  }
+
+  message Slave {
+    required SlaveInfo info = 1;
+
+    // If set, this agent is marked for draining and should be sent the
+    // appropriate DrainSlaveMessage upon reregistration.
+    optional DrainInfo drain_info = 2;
+
+    // If true, this agent should not be included in any offers,
+    // but should otherwise operate normally.
+    // If the `DrainInfo` is set, this value must also be set to `true`.
+    optional bool deactivated = 3 [default = false];
+  }
+
+  message Slaves {
+    repeated Slave slaves = 1;
+  }
+
+  message UnreachableSlave {
+    required SlaveID id = 1;
+
+    // The time when the slave was marked unreachable by the master.
+    required TimeInfo timestamp = 2;
+
+    // If the agent returns, these objects should be transferred to
+    // the appropriate `Slave` message as well.
+    optional DrainInfo drain_info = 3;
+    optional bool deactivated = 4 [default = false];
+  }
+
+  message UnreachableSlaves {
+    repeated UnreachableSlave slaves = 1;
+  }
+
+  message GoneSlave {
+    required SlaveID id = 1;
+
+    // The time when the slave was marked gone by the master.
+    required TimeInfo timestamp = 2;
+  }
+
+  message GoneSlaves {
+    repeated GoneSlave slaves = 1;
+  }
+
+  message Machine {
+    required MachineInfo info = 1;
+  }
+
+  message Machines {
+    repeated Machine machines = 1;
+  }
+
+  message Quota {
+    required quota.QuotaInfo info = 1;
+  }
+
+  message Weight {
+    required WeightInfo info = 1;
+  }
+
+  // The minimum set of `MasterInfo::Capability` that the master reading
+  // this registry should be capable of.  If the master is upgraded
+  // or downgraded and no longer satisfies these capabilities, the
+  // master is expected to exit upon recovery.
+  //
+  // We do not use `MasterInfo::Capability` in this field directly
+  // because the enumeration may be extended in later Mesos versions.
+  // If an earlier version is given an enum value from a later version,
+  // the protobuf parser will interpret this as an `UNKNOWN` capability,
+  // and we will be unable to provide remediation text to the operator.
+  message MinimumCapability {
+    required string capability = 1;
+  }
+
+  // Most recent leading master.
+  optional Master master = 1;
+
+  // All admitted (healthy) slaves.
+  optional Slaves slaves = 2;
+
+  // Slaves that have failed health checks. They may or may not still
+  // be running.
+  //
+  // New entries are added to the end of this list; hence the first
+  // element of the list was added first (although if there is clock
+  // drift, it might not necessarily have the smallest timestamp). The
+  // size of this list is limited by the `registry_max_agent_age` and
+  // `registry_max_agent_count` flags.
+  optional UnreachableSlaves unreachable = 7;
+
+  // Slaves that have been explicitly marked as failed (no longer running)
+  // by the operator. They may or may not still be running.
+  //
+  // New entries are added to the end of this list; hence the first
+  // element of the list was added first (although if there is clock
+  // drift, it might not necessarily have the smallest timestamp).
+  optional GoneSlaves gone = 8;
+
+  // Holds a list of machines and some status information about each.
+  // See comments in `MachineInfo` for more information.
+  optional Machines machines = 3;
+
+  // Describes a schedule for taking down specific machines for maintenance.
+  // The schedule is meant to give hints to frameworks about potential
+  // unavailability of resources.  The `schedules` are related to the status
+  // information found in `machines`.
+  repeated maintenance.Schedule schedules = 4;
+
+  // A list of recorded quotas in the cluster. It does not hold an actual
+  // assignment of resources, a newly elected master shall reconstruct it
+  // from the cluster.
+  //
+  // Prior to Mesos 1.9, quota information is persisted in the `quotas`
+  // field. It has since been deprecated in Mesos 1.9. Newly configured
+  // quotas are now persisted in the `quota_configs` field. When the user
+  // upgrade to Mesos 1.9, `quotas` will be preserved and recovered and
+  // `quota_configs` will be empty. As users configures new quotas, whether
+  // through the new `UPDATE_QUOTA` call or the deprecated `SET_QUTOA` call,
+  // the configured quotas will be persisted into the `quota_configs` field
+  // along with the `QUOTA_V2` minimum capability. The capability is removed
+  // only if `quota_configs` becomes empty again. If a role already has an
+  // entry in the old `quotas` field, it will be removed from `quotas`.
+  // In other words, once upgraded, `quotas` will still be preserved and honored,
+  // but it will never grow. Instead it will gradually shrink as the roles'
+  // quotas get updated or removed.
+  //
+  // TODO(mzhu): Remove `quotas` in Mesos 2.0 (MESOS-9866).
+  repeated Quota quotas = 5 [deprecated = true];
+  repeated quota.QuotaConfig quota_configs = 11;
+
+  // A list of recorded weights in the cluster, a newly elected master shall
+  // reconstruct it from the registry.
+  repeated Weight weights = 6;
+
+  // All known resource providers.
+  optional resource_provider.registry.Registry resource_provider_registry = 9;
+
+  repeated MinimumCapability minimum_capabilities = 10;
+}

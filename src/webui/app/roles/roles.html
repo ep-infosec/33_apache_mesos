@@ -1,0 +1,170 @@
+<ol class="breadcrumb">
+  <li>
+    <a class="badge badge-type" href="#/">Master</a>
+  </li>
+  <li class="active">
+    <span class="badge badge-type">Roles</span>
+  </li>
+</ol>
+
+<strong>Columns:</strong>
+&nbsp
+<input class="form-check-label" type="checkbox" ng-model="show_weight">
+Weight
+&nbsp
+<input class="form-check-label" type="checkbox" ng-model="show_framework_count">
+Frameworks
+&nbsp
+<input class="form-check-label" type="checkbox" ng-model="show_offered">
+Offered
+&nbsp
+<input class="form-check-label" type="checkbox" ng-model="show_allocated">
+Allocated
+&nbsp
+<input class="form-check-label" type="checkbox" ng-model="show_reserved">
+Reserved
+&nbsp
+<input class="form-check-label" type="checkbox" ng-model="show_quota_consumption">
+Quota Consumption
+&nbsp
+<input class="form-check-label" type="checkbox" ng-model="show_quota_guarantee">
+Quota Guarantee
+&nbsp
+<input class="form-check-label" type="checkbox" ng-model="show_quota_limit">
+Quota Limit
+
+<table m-table table-content="roles.roles" title="Roles"
+  class="table table-striped table-bordered table-condensed">
+  <thead>
+    <tr>
+      <th data-key="name" data-sort class="ascending vertically-center" rowspan="3">Role</th>
+      <th data-key="weight" class="vertically-center" ng-show="show_weight" rowspan="3">Weight</th>
+      <th data-key="frameworks.length" class="vertically-center" ng-show="show_framework_count" rowspan="3">Frameworks</th>
+      <th class="group-column" ng-show="show_offered" colspan="4" rowspan="2">Offered</th>
+      <th class="group-column" ng-show="show_allocated" colspan="4" rowspan="2">Allocated</th>
+      <th class="group-column" ng-show="show_reserved" colspan="4" rowspan="2">Reserved</th>
+      <th class="group-column" ng-show="show_quota_consumption || show_quota_guarantee || show_quota_limit" colspan="12">Quota</th>
+    </tr>
+    <tr>
+      <th class="group-column" ng-show="show_quota_consumption" colspan="4" class="end-group-column">Consumption <span class="glyphicon glyphicon-question-sign" aria-hidden="true" tooltip="Allocated or Reserved"/></th>
+      <th class="group-column" ng-show="show_quota_guarantee" colspan="4" class="end-group-column">Guarantee</th>
+      <th class="group-column" ng-show="show_quota_limit" colspan="4" class="end-group-column">Limit</th>
+    </tr>
+    <tr>
+      <th ng-show="show_offered" data-key="offered.cpus" class="begin-group-column">CPU</th>
+      <th ng-show="show_offered" data-key="offered.gpus">GPU</th>
+      <th ng-show="show_offered" data-key="offered.mem">Mem</th>
+      <th ng-show="show_offered" data-key="offered.disk" class="end-group-column">Disk</th>
+
+      <th ng-show="show_allocated" data-key="allocated.cpus" class="begin-group-column">CPU</th>
+      <th ng-show="show_allocated" data-key="allocated.gpus">GPU</th>
+      <th ng-show="show_allocated" data-key="allocated.mem">Mem</th>
+      <th ng-show="show_allocated" data-key="allocated.disk" class="end-group-column">Disk</th>
+
+      <th ng-show="show_reserved" data-key="reserved.cpus" class="begin-group-column">CPU</th>
+      <th ng-show="show_reserved" data-key="reserved.gpus">GPU</th>
+      <th ng-show="show_reserved" data-key="reserved.mem">Mem</th>
+      <th ng-show="show_reserved" data-key="reserved.disk" class="end-group-column">Disk</th>
+
+      <th ng-show="show_quota_consumption" data-key="quota.consumed.cpus" class="begin-group-column">CPU</th>
+      <th ng-show="show_quota_consumption" data-key="quota.consumed.gpus">GPU</th>
+      <th ng-show="show_quota_consumption" data-key="quota.consumed.mem">Mem</th>
+      <th ng-show="show_quota_consumption" data-key="quota.consumed.disk" class="end-group-column">Disk</th>
+
+      <th ng-show="show_quota_guarantee" data-key="quota.guarantee.cpus" class="begin-group-column">CPU</th>
+      <th ng-show="show_quota_guarantee" data-key="quota.guarantee.gpus">GPU</th>
+      <th ng-show="show_quota_guarantee" data-key="quota.guarantee.mem">Mem</th>
+      <th ng-show="show_quota_guarantee" data-key="quota.guarantee.disk" class="end-group-column">Disk</th>
+
+      <th ng-show="show_quota_limit" data-key="quota.limit.cpus" class="begin-group-column">CPU</th>
+      <th ng-show="show_quota_limit" data-key="quota.limit.gpus">GPU</th>
+      <th ng-show="show_quota_limit" data-key="quota.limit.mem">Mem</th>
+      <th ng-show="show_quota_limit" data-key="quota.limit.disk" class="end-group-column">Disk</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="role in $data">
+      <td>{{role.name}}</td>
+      <td ng-show="show_weight">{{role.weight | number}}</td>
+      <td ng-show="show_framework_count">{{role.frameworks.length | number}}</td>
+
+      <td ng-show="show_offered" class="begin-group-column">
+        {{(role.offered.cpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_offered">
+        {{(role.offered.gpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_offered">
+        {{((role.offered.mem * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+      <td ng-show="show_offered" class="end-group-column">
+        {{((role.offered.disk * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+
+      <td ng-show="show_allocated" class="begin-group-column">
+        {{(role.allocated.cpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_allocated">
+        {{(role.allocated.gpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_allocated">
+        {{((role.allocated.mem * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+      <td ng-show="show_allocated" class="end-group-column">
+        {{((role.allocated.disk * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+
+      <td ng-show="show_reserved" class="begin-group-column">
+        {{(role.reserved.cpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_reserved">
+        {{(role.reserved.gpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_reserved">
+        {{((role.reserved.mem * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+      <td ng-show="show_reserved" class="end-group-column">
+        {{((role.reserved.disk * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+
+      <td ng-show="show_quota_consumption" class="begin-group-column">
+        {{(role.quota.consumed.cpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_quota_consumption">
+        {{(role.quota.consumed.gpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_quota_consumption">
+        {{((role.quota.consumed.mem * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+      <td ng-show="show_quota_consumption" class="end-group-column">
+        {{((role.quota.consumed.disk * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+
+      <td ng-show="show_quota_guarantee" class="begin-group-column">
+        {{(role.quota.guarantee.cpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_quota_guarantee">
+        {{(role.quota.guarantee.gpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_quota_guarantee">
+        {{((role.quota.guarantee.mem * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+      <td ng-show="show_quota_guarantee" class="end-group-column">
+        {{((role.quota.guarantee.disk * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+
+      <td ng-show="show_quota_limit" class="begin-group-column">
+        {{(role.quota.limit.cpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_quota_limit">
+        {{(role.quota.limit.gpus | decimalFloat) || "-"}}
+      </td>
+      <td ng-show="show_quota_limit">
+        {{((role.quota.limit.mem * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+      <td ng-show="show_quota_limit" class="end-group-column">
+        {{((role.quota.limit.disk * (1024 * 1024) || NaN) | dataSize) || "-"}}
+      </td>
+    </tr>
+  </tbody>
+</table>
